@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -11,6 +11,7 @@ import os
 from datetime import datetime
 from collections import Counter
 from matplotlib.colors import LinearSegmentedColormap
+import uvicorn
 
 # Initialisation de l'app
 app = FastAPI(title="API Analyse Veille Médiatique")
@@ -72,11 +73,10 @@ async def analyser_json(payload: JSONData):
     evolution_mentions_b64 = fig_to_base64(fig1)
     plt.close(fig1)
 
-    # WordCloud des mots-clés + résumé automatique
+    # WordCloud + résumé automatique
     all_keywords = [kw.lower() for sublist in df["keywords"] if isinstance(sublist, list) for kw in sublist]
     summary_text = ""
     if all_keywords:
-        # Génération du WordCloud
         keywords_text = " ".join(all_keywords)
         custom_cmap = LinearSegmentedColormap.from_list("custom_blue", ["#023047", "#023047"])
         wordcloud = WordCloud(width=800, height=400, background_color="white", colormap=custom_cmap).generate(keywords_text)
@@ -87,7 +87,6 @@ async def analyser_json(payload: JSONData):
         keywords_freq_b64 = fig_to_base64(fig_kw)
         plt.close(fig_kw)
 
-        # Résumé basé sur les mots-clés dominants (top 6)
         counter = Counter(all_keywords)
         top_keywords = [kw for kw, _ in counter.most_common(6)]
         if top_keywords:
@@ -99,7 +98,7 @@ async def analyser_json(payload: JSONData):
     else:
         keywords_freq_b64 = ""
 
-    # Sentiments par auteur (graphique horizontal)
+    # Sentiments par auteur
     author_sentiment = df.groupby(['authorName', 'sentimentHumanReadable']).size().unstack(fill_value=0)
     author_sentiment['Total'] = author_sentiment.sum(axis=1)
     top_authors_sentiment = author_sentiment.sort_values(by='Total', ascending=False).head(10).drop(columns='Total')
@@ -188,3 +187,8 @@ async def analyser_json(payload: JSONData):
 @app.get("/rapport")
 def get_rapport():
     return FileResponse("static/rapport_veille.html", media_type="text/html")
+
+# Lancement automatique pour Railway
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
