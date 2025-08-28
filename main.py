@@ -55,6 +55,10 @@ async def analyser_json(payload: JSONData):
         "sentiment_label": "sentimentHumanReadable",
     })
 
+    # éviter les auteurs vides
+    df["authorName"] = df["authorName"].fillna("Auteur Inconnu")
+    df["authorName"] = df["authorName"].replace("", "Auteur Inconnu")
+
     kpis = {
         "total_mentions": len(df),
         "positive": int((df["sentimentHumanReadable"] == "positive").sum()),
@@ -67,7 +71,6 @@ async def analyser_json(payload: JSONData):
     mentions_over_time = df["Period"].value_counts().sort_index()
     fig1, ax1 = plt.subplots(figsize=(10, 4))
     ax1.plot(mentions_over_time.index.astype(str), mentions_over_time.values, marker='o', linestyle='-', color="#023047")
-    ax1.set_title("Évolution des mentions par jour")
     ax1.set_ylabel("Mentions")
     plt.xticks(rotation=45)
     evolution_mentions_b64 = fig_to_base64(fig1)
@@ -83,7 +86,6 @@ async def analyser_json(payload: JSONData):
         fig_kw, ax_kw = plt.subplots(figsize=(10, 5))
         ax_kw.imshow(wordcloud, interpolation='bilinear')
         ax_kw.axis("off")
-        ax_kw.set_title("Mots-clés les plus fréquents", fontsize=16)
         keywords_freq_b64 = fig_to_base64(fig_kw)
         plt.close(fig_kw)
 
@@ -108,7 +110,6 @@ async def analyser_json(payload: JSONData):
     top_authors_sentiment.plot(kind='barh', stacked=True, ax=ax3, color="#023047")
     ax3.set_xlabel("Nombre d'articles")
     ax3.set_ylabel("Auteur")
-    ax3.set_title("Répartition des sentiments par auteur")
     sentiments_auteurs_b64 = fig_to_base64(fig3)
     plt.close(fig3)
 
@@ -122,15 +123,13 @@ async def analyser_json(payload: JSONData):
         .to_html(index=False, border=1, classes="styled-table")
     )
 
-    # HTML final
+    # HTML final 
     html_report = f"""<!DOCTYPE html>
 <html lang='fr'>
 <head>
     <meta charset='UTF-8'>
-    <title>📊 Rapport d'Analyse Automatisée de Veille Médiatique</title>
     <style>
         body {{ font-family: Arial, sans-serif; padding: 40px; max-width: 900px; margin: auto; background-color: white; }}
-        h1, h2 {{ text-align: center; color: #023047; }}
         .centered-text {{ max-width: 800px; margin: 0 auto 40px; text-align: center; font-size: 16px; line-height: 1.6; }}
         .styled-table {{ border-collapse: collapse; margin: 25px auto; font-size: 16px; width: 80%; border: 1px solid #dddddd; }}
         .styled-table th, .styled-table td {{ padding: 10px 15px; text-align: left; border: 1px solid #dddddd; }}
@@ -139,7 +138,6 @@ async def analyser_json(payload: JSONData):
     </style>
 </head>
 <body>
-    <h1>📊 Rapport d'Analyse Automatisée de Veille Médiatique</h1>
     <div class="centered-text">
         <p>
             Ce rapport fournit une analyse approfondie des articles collectés depuis la plateforme Lumenfeed. 
@@ -147,7 +145,6 @@ async def analyser_json(payload: JSONData):
             en mettant en évidence les volumes de publication, les auteurs les plus actifs, et les principaux mots-clés abordés. 
         </p>
     </div>
-    <h2>Indicateurs Clés</h2>
     <div style="display: flex; justify-content: space-around; margin: 20px 0;">
         <div style="text-align: center;"><h3>{kpis['total_mentions']}</h3><p>Mentions totales</p></div>
         <div style="text-align: center;"><h3>{kpis['positive']}</h3><p>Positives</p></div>
@@ -155,22 +152,17 @@ async def analyser_json(payload: JSONData):
         <div style="text-align: center;"><h3>{kpis['neutral']}</h3><p>Neutres</p></div>
     </div>
     <div class="image-block">
-        <h2>Évolution des mentions</h2>
         <img src="data:image/png;base64,{evolution_mentions_b64}" width="700"/>
     </div>
     <div class="image-block">
-        <h2>Mots-clés les plus fréquents</h2>
         <img src="data:image/png;base64,{keywords_freq_b64}" width="600"/>
     </div>
-    <h2>Résumé automatique</h2>
     <div class="centered-text">
         <p>{summary_text}</p>
     </div>
     <div class="image-block">
-        <h2>Répartition des sentiments par auteur</h2>
         <img src="data:image/png;base64,{sentiments_auteurs_b64}" width="700"/>
     </div>
-    <h2>Top 5 Auteurs les plus actifs</h2>
     {top_table}
 </body>
 </html>
@@ -192,4 +184,3 @@ def get_rapport():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
-    
