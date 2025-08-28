@@ -66,12 +66,20 @@ async def analyser_json(payload: JSONData):
         "neutral": int((df["sentimentHumanReadable"] == "neutral").sum()),
     }
 
+    # Intro texte
+    intro_text = (
+        "Ce rapport fournit une analyse approfondie des articles collectés depuis la plateforme Lumenfeed. "
+        "Il vise à offrir une vision claire et synthétique de la couverture médiatique d’un sujet donné, "
+        "en mettant en évidence les volumes de publication, les auteurs les plus actifs, "
+        "et les principaux mots-clés abordés."
+    )
+
     # Évolution des mentions
     df["Period"] = df["articleCreatedDate"].dt.date
     mentions_over_time = df["Period"].value_counts().sort_index()
     fig1, ax1 = plt.subplots(figsize=(10, 4))
     ax1.plot(mentions_over_time.index.astype(str), mentions_over_time.values, marker='o', linestyle='-', color="#023047")
-    ax1.set_ylabel("Mentions")
+    ax1.set_ylabel("#Mentions")
     plt.xticks(rotation=45)
     evolution_mentions_b64 = fig_to_base64(fig1)
     plt.close(fig1)
@@ -108,8 +116,8 @@ async def analyser_json(payload: JSONData):
 
     fig3, ax3 = plt.subplots(figsize=(10, 6))
     top_authors_sentiment.plot(kind='barh', stacked=True, ax=ax3, color="#023047")
-    ax3.set_xlabel("Nombre d'articles")
-    ax3.set_ylabel("Auteur")
+    ax3.set_xlabel("#Articles")
+    ax3.set_ylabel("Author")
     sentiments_auteurs_b64 = fig_to_base64(fig3)
     plt.close(fig3)
 
@@ -118,7 +126,7 @@ async def analyser_json(payload: JSONData):
         df["authorName"]
         .value_counts()
         .reset_index()
-        .rename(columns={"index": "count", "authorName": "Auteur"})
+        .rename(columns={"index": "count", "authorName": "Author"})
         .head(5)
         .to_html(index=False, border=1, classes="styled-table")
     )
@@ -139,17 +147,13 @@ async def analyser_json(payload: JSONData):
 </head>
 <body>
     <div class="centered-text">
-        <p>
-            Ce rapport fournit une analyse approfondie des articles collectés depuis la plateforme Lumenfeed. 
-            Il vise à offrir une vision claire et synthétique de la couverture médiatique d’un sujet donné, 
-            en mettant en évidence les volumes de publication, les auteurs les plus actifs, et les principaux mots-clés abordés. 
-        </p>
+        <p>{intro_text}</p>
     </div>
     <div style="display: flex; justify-content: space-around; margin: 20px 0;">
-        <div style="text-align: center;"><h3>{kpis['total_mentions']}</h3><p>Mentions totales</p></div>
-        <div style="text-align: center;"><h3>{kpis['positive']}</h3><p>Positives</p></div>
-        <div style="text-align: center;"><h3>{kpis['negative']}</h3><p>Négatives</p></div>
-        <div style="text-align: center;"><h3>{kpis['neutral']}</h3><p>Neutres</p></div>
+        <div style="text-align: center;"><h3>{kpis['total_mentions']}</h3><p>Total</p></div>
+        <div style="text-align: center;"><h3>{kpis['positive']}</h3><p>Positive</p></div>
+        <div style="text-align: center;"><h3>{kpis['negative']}</h3><p>Negative</p></div>
+        <div style="text-align: center;"><h3>{kpis['neutral']}</h3><p>Neutral</p></div>
     </div>
     <div class="image-block">
         <img src="data:image/png;base64,{evolution_mentions_b64}" width="700"/>
@@ -172,7 +176,13 @@ async def analyser_json(payload: JSONData):
         f.write(html_report)
 
     return {
+        "intro": intro_text,
+        "summary_text": summary_text,
         "kpis": kpis,
+        "graph1_html": f'<img src="data:image/png;base64,{evolution_mentions_b64}" width="700"/>',
+        "graph2_html": f'<img src="data:image/png;base64,{keywords_freq_b64}" width="600"/>',
+        "graph3_html": f'<img src="data:image/png;base64,{sentiments_auteurs_b64}" width="700"/>',
+        "top_authors_html": top_table,
         "html_report": html_report
     }
 
