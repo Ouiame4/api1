@@ -75,7 +75,7 @@ async def analyze_json(payload: JSONData):
 
     # Add values above each 
     for x, y in zip(mentions_over_time.index.astype(str), mentions_over_time.values):
-        ax1.text(x, y + 0.18, str(y), ha='center', fontsize=9)
+        ax1.text(x, y + 0.2, str(y), ha='center', fontsize=9)
 
     evolution_mentions_b64 = fig_to_base64(fig1)
     plt.close(fig1)
