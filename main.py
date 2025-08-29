@@ -73,9 +73,9 @@ async def analyze_json(payload: JSONData):
     ax1.set_ylabel("Mentions")
     plt.xticks(rotation=45)
 
-    # Add values above each point
+    # Add values above each 
     for x, y in zip(mentions_over_time.index.astype(str), mentions_over_time.values):
-        ax1.text(x, y + 0.15, str(y), ha='left', fontsize=9)
+        ax1.text(x, y + 0.17, str(y), ha='center', fontsize=9)
 
     evolution_mentions_b64 = fig_to_base64(fig1)
     plt.close(fig1)
