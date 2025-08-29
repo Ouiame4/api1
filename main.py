@@ -75,7 +75,7 @@ async def analyze_json(payload: JSONData):
 
     # Add values above each point
     for x, y in zip(mentions_over_time.index.astype(str), mentions_over_time.values):
-        ax1.text(x, y + 0.25, str(y), ha='center', fontsize=9)
+        ax1.text(x, y + 0.2, str(y), ha='center', fontsize=9)
 
     evolution_mentions_b64 = fig_to_base64(fig1)
     plt.close(fig1)
@@ -120,7 +120,7 @@ async def analyze_json(payload: JSONData):
     # Add values next to bars
     for i, (author, row) in enumerate(top_authors_sentiment.iterrows()):
         total_articles = row.sum()
-        ax3.text(total_articles + 0.25, i, str(total_articles), va='center', fontsize=9)
+        ax3.text(total_articles + 0.2, i, str(total_articles), va='center', fontsize=9)
 
     author_sentiment_b64 = fig_to_base64(fig3)
     plt.close(fig3)
