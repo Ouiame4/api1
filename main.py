@@ -56,6 +56,10 @@ async def analyze_json(payload: JSONData):
         "sentiment_label": "sentimentHumanReadable",
     })
 
+    # Replace missing or empty authors with a default value
+    df["authorName"] = df["authorName"].fillna("Unknown Author")  # Replace NaN
+    df["authorName"] = df["authorName"].replace("", "Unknown Author")  # Replace empty strings
+
     # KPIs
     kpis = {
         "total_mentions": len(df),
@@ -73,7 +77,7 @@ async def analyze_json(payload: JSONData):
     ax1.set_ylabel("Mentions")
     plt.xticks(rotation=45)
 
-    # Add values above each 
+    # Add values above each point
     for x, y in zip(mentions_over_time.index.astype(str), mentions_over_time.values):
         ax1.text(x, y + 0.2, str(y), ha='center', fontsize=9)
 
@@ -135,7 +139,7 @@ async def analyze_json(payload: JSONData):
         .to_html(index=False, border=1, classes="styled-table")
     )
 
-    # Final HTML report 
+    # Final HTML report
     html_report = f"""<!DOCTYPE html>
 <html lang='en'>
 <head>
